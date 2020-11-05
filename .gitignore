@@ -7,6 +7,9 @@ RAMClusteR-concordance.tex
 RAMClusteR.tex
 inst/doc
 
+# vscode
+.vscode
+
 # R stuff
 .Rhistory
 .Rproj.user
