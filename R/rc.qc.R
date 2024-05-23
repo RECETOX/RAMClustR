@@ -13,6 +13,7 @@
 #' @return   new RC object. Saves output summary plots to pdf and .csv summary tables to new 'QC' directory. If remove.qc = TRUE, moves QC samples to new $QC slot from original position. 
 #' @references Broeckling CD, Afsar FA, Neumann S, Ben-Hur A, Prenni JE. RAMClust: a novel feature clustering method enables spectral-matching-based annotation for metabolomics data. Anal Chem. 2014 Jul 15;86(14):6812-7. doi: 10.1021/ac501530d.  Epub 2014 Jun 26. PubMed PMID: 24927477.
 #' @references Broeckling CD, Ganna A, Layer M, Brown K, Sutton B, Ingelsson E, Peers G, Prenni JE. Enabling Efficient and Confident Annotation of LC-MS Metabolomics Data through MS1 Spectrum and Time Prediction. Anal Chem. 2016 Sep 20;88(18):9226-34. doi: 10.1021/acs.analchem.6b02479. Epub 2016 Sep 8. PubMed PMID: 7560453.
+#' @importFrom pcaMethods pca
 #' @concept ramclustR
 #' @concept RAMClustR
 #' @concept metabolomics
@@ -55,7 +56,7 @@ rc.qc<-function(ramclustObj=NULL,
   if(is.null(ramclustObj$MSdata)) {
     do.sets <- do.sets[!(do.sets %in% "MSdata")]
   } 
-
+  
   do.sets.rows <- sapply(
     c(do.sets, "phenoData"), 
     FUN = function(x) {
@@ -86,32 +87,33 @@ rc.qc<-function(ramclustObj=NULL,
   ## correlational r values 1 step from the diagonal
   ## imperfect clustering introduces right skew
   ## load("datasets/RCobject.Rdata")
-  if(!is.null(ramclustObj$clrt)) {
-    
-    ## create file to collect figures. 
-    pdf(file=paste("QC/", "ramclust_clustering_diagnostic.pdf", sep=""), 
-        useDingbats=FALSE, width=8, height=8)  
-    o<-order(ramclustObj$clrt[cmpd.use])
-    c<-cor(ramclustObj$SpecAbund[,cmpd.use][,o])
-    d<-diag(as.matrix((c[2:(nrow(c)), 1:ncol(c)-1])))
-    hist(d, breaks=50, main="")
-    title(main="histogram of pearson's r for each cluster to its adjacent cluster (by time)", cex.main=0.8,
-          sub=paste("skew =", round(e1071::skewness(d), digits=3), " :values near zero are better", '\n', 
-                    'WARNING:metabolic relationships will confound interpretation of this plot'), cex.sub=0.6)
-    
-    # ideally heatmap will have a bright yellow diagonal with no yellow squares near the diagonal
-    # this is slow for larger numbers of clusters
-    gplots::heatmap.2(c^2, trace="none", dendrogram="none", Rowv=FALSE, Colv=FALSE, main="pearsons r^2, clusters sorted by rt", cex.main=0.5,
-                      cexRow=0.02 + 1/log10(length(o)), cexCol=0.02 + 1/log10(length(o)))
-    dev.off()
-  }
   
+  # if(!is.null(ramclustObj$clrt)) {
+  #   
+  #   ## create file to collect figures. 
+  #   pdf(file=paste("QC/", "ramclust_clustering_diagnostic.pdf", sep=""), 
+  #       useDingbats=FALSE, width=8, height=8)  
+  #   o<-order(ramclustObj$clrt[cmpd.use])
+  #   c<-cor(ramclustObj$SpecAbund[,cmpd.use][,o])
+  #   d<-diag(as.matrix((c[2:(nrow(c)), 1:ncol(c)-1])))
+  #   hist(d, breaks=50, main="")
+  #   title(main="histogram of pearson's r for each cluster to its adjacent cluster (by time)", cex.main=0.8,
+  #         sub=paste("skew =", round(e1071::skewness(d), digits=3), " :values near zero are better", '\n', 
+  #                   'WARNING:metabolic relationships will confound interpretation of this plot'), cex.sub=0.6)
+  #   
+  #   # ideally heatmap will have a bright yellow diagonal with no yellow squares near the diagonal
+  #   # this is slow for larger numbers of clusters
+  #   gplots::heatmap.2(c^2, trace="none", dendrogram="none", Rowv=FALSE, Colv=FALSE, main="pearsons r^2, clusters sorted by rt", cex.main=0.5,
+  #                     cexRow=0.02 + 1/log10(length(o)), cexCol=0.02 + 1/log10(length(o)))
+  #   dev.off()
+  # }
+  # 
   
   ## PCA of QC samples
   ## histogram of feature and/or compound CVs for QC samples
   
-  cols<-rep(8, length(ramclustObj$sample_names))
-  #cols<-rep(8, nrow(ramclustObj$phenoData))
+  # cols<-rep(8, length(ramclustObj$sample_names))
+  cols<-rep(8, nrow(ramclustObj$phenoData))
   cols[qc]<-2
   
   for(x in do.sets) {
@@ -233,5 +235,3 @@ rc.qc<-function(ramclustObj=NULL,
   
   return(ramclustObj)
 }
-
-
